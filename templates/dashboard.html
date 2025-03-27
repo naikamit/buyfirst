@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TastyTrade Webhook Dashboard</title>
+    <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>TastyTrade Webhook Dashboard</h1>
+        </header>
+        
+        <div class="stats">
+            <div class="stat-card">
+                <h3>Total Requests</h3>
+                <p id="total-requests">0</p>
+            </div>
+            <div class="stat-card">
+                <h3>Successful Trades</h3>
+                <p id="successful-trades">0</p>
+            </div>
+            <div class="stat-card">
+                <h3>Failed Trades</h3>
+                <p id="failed-trades">0</p>
+            </div>
+        </div>
+        
+        <div class="log-container">
+            <div class="log-header">
+                <h2>API Logs</h2>
+                <button id="refresh-btn">Refresh</button>
+            </div>
+            <div class="log-entries" id="log-entries">
+                <!-- Log entries will be dynamically populated here -->
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Initialize dashboard
+        document.addEventListener('DOMContentLoaded', function() {
+            fetchLogs();
+            
+            // Set up refresh button
+            document.getElementById('refresh-btn').addEventListener('click', fetchLogs);
+            
+            // Auto-refresh every 30 seconds
+            setInterval(fetchLogs, 30000);
+        });
+        
+        // Fetch logs from the API
+        async function fetchLogs() {
+            try {
+                const response = await fetch('/api/logs');
+                const logs = await response.json();
+                
+                updateStats(logs);
+                renderLogs(logs);
+            } catch (error) {
+                console.error('Error fetching logs:', error);
+            }
+        }
+        
+        // Update dashboard statistics
+        function updateStats(logs) {
+            const totalRequests = logs.filter(log => log.type === 'request').length;
+            const successfulTrades = logs.filter(log => 
+                log.type === 'response' && 
+                log.payload && 
+                log.payload.status === 'success'
+            ).length;
+            const failedTrades = logs.filter(log => 
+                log.type === 'response' && 
+                log.payload && 
+                log.payload.status === 'error'
+            ).length;
+            
+            document.getElementById('total-requests').textContent = totalRequests;
+            document.getElementById('successful-trades').textContent = successfulTrades;
+            document.getElementById('failed-trades').textContent = failedTrades;
+        }
+        
+        // Render log entries
+        function renderLogs(logs) {
+            const logContainer = document.getElementById('log-entries');
+            logContainer.innerHTML = '';
+            
+            // Reverse logs to show newest first
+            logs.reverse().forEach(log => {
+                const logEntry = document.createElement('div');
+                logEntry.className = `log-entry ${log.type}`;
+                
+                const header = document.createElement('div');
+                header.className = 'log-entry-header';
+                
+                const timestamp = document.createElement('span');
+                timestamp.className = 'timestamp';
+                timestamp.textContent = log.timestamp;
+                
+                const typeLabel = document.createElement('span');
+                typeLabel.className = `type-label ${log.type}`;
+                typeLabel.textContent = log.type.toUpperCase();
+                
+                const method = document.createElement('span');
+                method.className = 'method';
+                method.textContent = log.method;
+                
+                const endpoint = document.createElement('span');
+                endpoint.className = 'endpoint';
+                endpoint.textContent = log.endpoint;
+                
+                header.appendChild(timestamp);
+                header.appendChild(typeLabel);
+                header.appendChild(method);
+                header.appendChild(endpoint);
+                
+                const payload = document.createElement('pre');
+                payload.className = 'payload';
+                payload.textContent = JSON.stringify(log.payload, null, 2);
+                
+                logEntry.appendChild(header);
+                logEntry.appendChild(payload);
+                
+                logContainer.appendChild(logEntry);
+            });
+        }
+    </script>
+</body>
+</html> 
