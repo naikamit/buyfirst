@@ -5,6 +5,81 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TastyTrade Webhook Dashboard</title>
     <link rel="stylesheet" href="/static/styles.css">
+    <style>
+        .tab-container {
+            margin-top: 20px;
+        }
+        .tab-buttons {
+            display: flex;
+            margin-bottom: 10px;
+        }
+        .tab-btn {
+            padding: 10px 20px;
+            background-color: #f0f0f0;
+            border: none;
+            cursor: pointer;
+            margin-right: 5px;
+            border-radius: 5px 5px 0 0;
+        }
+        .tab-btn.active {
+            background-color: #4a90e2;
+            color: white;
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        .tastytrade-log-entry {
+            margin-bottom: 15px;
+            padding: 15px;
+            border-radius: 5px;
+            background-color: #f9f9f9;
+            border-left: 5px solid #4a90e2;
+        }
+        .tastytrade-log-entry.error {
+            border-left: 5px solid #e74c3c;
+        }
+        .tastytrade-log-entry.success {
+            border-left: 5px solid #2ecc71;
+        }
+        .log-meta {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            font-size: 0.9em;
+        }
+        .endpoint-method {
+            font-weight: bold;
+        }
+        .status {
+            padding: 3px 8px;
+            border-radius: 3px;
+            font-size: 0.8em;
+        }
+        .status.success {
+            background-color: #2ecc71;
+            color: white;
+        }
+        .status.error {
+            background-color: #e74c3c;
+            color: white;
+        }
+        .log-data {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+        .request-data, .response-data, .error-data {
+            flex: 1;
+            min-width: 300px;
+        }
+        h4 {
+            margin-top: 0;
+            color: #333;
+        }
+    </style>
 </head>
 <body>
     <div class="container">
@@ -25,15 +100,40 @@
                 <h3>Failed Trades</h3>
                 <p id="failed-trades">0</p>
             </div>
+            <div class="stat-card">
+                <h3>TastyTrade API Calls</h3>
+                <p id="tastytrade-calls">0</p>
+            </div>
         </div>
         
-        <div class="log-container">
-            <div class="log-header">
-                <h2>API Logs</h2>
-                <button id="refresh-btn">Refresh</button>
+        <div class="tab-container">
+            <div class="tab-buttons">
+                <button class="tab-btn active" data-tab="webhook-logs">Webhook Logs</button>
+                <button class="tab-btn" data-tab="tastytrade-logs">TastyTrade API Logs</button>
             </div>
-            <div class="log-entries" id="log-entries">
-                <!-- Log entries will be dynamically populated here -->
+            
+            <div class="tab-content active" id="webhook-logs">
+                <div class="log-container">
+                    <div class="log-header">
+                        <h2>Webhook API Logs</h2>
+                        <button id="refresh-btn">Refresh</button>
+                    </div>
+                    <div class="log-entries" id="log-entries">
+                        <!-- Log entries will be dynamically populated here -->
+                    </div>
+                </div>
+            </div>
+            
+            <div class="tab-content" id="tastytrade-logs">
+                <div class="log-container">
+                    <div class="log-header">
+                        <h2>TastyTrade API Logs</h2>
+                        <button id="refresh-tt-btn">Refresh</button>
+                    </div>
+                    <div class="log-entries" id="tastytrade-log-entries">
+                        <!-- TastyTrade log entries will be dynamically populated here -->
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -42,15 +142,31 @@
         // Initialize dashboard
         document.addEventListener('DOMContentLoaded', function() {
             fetchLogs();
+            fetchTastyTradeLogs();
             
-            // Set up refresh button
+            // Set up refresh buttons
             document.getElementById('refresh-btn').addEventListener('click', fetchLogs);
+            document.getElementById('refresh-tt-btn').addEventListener('click', fetchTastyTradeLogs);
+            
+            // Set up tab switching
+            document.querySelectorAll('.tab-btn').forEach(button => {
+                button.addEventListener('click', function() {
+                    // Remove active class from all buttons and contents
+                    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+                    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                    
+                    // Add active class to clicked button and corresponding content
+                    this.classList.add('active');
+                    document.getElementById(this.dataset.tab).classList.add('active');
+                });
+            });
             
             // Auto-refresh every 30 seconds
             setInterval(fetchLogs, 30000);
+            setInterval(fetchTastyTradeLogs, 30000);
         });
         
-        // Fetch logs from the API
+        // Fetch webhook logs from the API
         async function fetchLogs() {
             try {
                 const response = await fetch('/api/logs');
@@ -60,6 +176,19 @@
                 renderLogs(logs);
             } catch (error) {
                 console.error('Error fetching logs:', error);
+            }
+        }
+        
+        // Fetch TastyTrade API logs
+        async function fetchTastyTradeLogs() {
+            try {
+                const response = await fetch('/api/tastytrade-logs');
+                const logs = await response.json();
+                
+                document.getElementById('tastytrade-calls').textContent = logs.length;
+                renderTastyTradeLogs(logs);
+            } catch (error) {
+                console.error('Error fetching TastyTrade logs:', error);
             }
         }
         
@@ -82,7 +211,7 @@
             document.getElementById('failed-trades').textContent = failedTrades;
         }
         
-        // Render log entries
+        // Render webhook log entries
         function renderLogs(logs) {
             const logContainer = document.getElementById('log-entries');
             logContainer.innerHTML = '';
@@ -122,6 +251,72 @@
                 
                 logEntry.appendChild(header);
                 logEntry.appendChild(payload);
+                
+                logContainer.appendChild(logEntry);
+            });
+        }
+        
+        // Render TastyTrade API log entries
+        function renderTastyTradeLogs(logs) {
+            const logContainer = document.getElementById('tastytrade-log-entries');
+            logContainer.innerHTML = '';
+            
+            // Reverse logs to show newest first
+            logs.reverse().forEach(log => {
+                const logEntry = document.createElement('div');
+                logEntry.className = `tastytrade-log-entry ${log.status}`;
+                
+                const logMeta = document.createElement('div');
+                logMeta.className = 'log-meta';
+                
+                const timestampEndpoint = document.createElement('div');
+                timestampEndpoint.innerHTML = `
+                    <span class="timestamp">${log.timestamp}</span>
+                    <span class="endpoint-method">${log.endpoint} [${log.method}]</span>
+                `;
+                
+                const statusSpan = document.createElement('span');
+                statusSpan.className = `status ${log.status}`;
+                statusSpan.textContent = log.status.toUpperCase();
+                
+                logMeta.appendChild(timestampEndpoint);
+                logMeta.appendChild(statusSpan);
+                
+                const logData = document.createElement('div');
+                logData.className = 'log-data';
+                
+                // Request data section
+                const requestData = document.createElement('div');
+                requestData.className = 'request-data';
+                requestData.innerHTML = `
+                    <h4>Request Data</h4>
+                    <pre>${JSON.stringify(log.request_data || {}, null, 2)}</pre>
+                `;
+                
+                // Response data section
+                const responseData = document.createElement('div');
+                responseData.className = 'response-data';
+                responseData.innerHTML = `
+                    <h4>Response Data</h4>
+                    <pre>${JSON.stringify(log.response_data || {}, null, 2)}</pre>
+                `;
+                
+                logData.appendChild(requestData);
+                logData.appendChild(responseData);
+                
+                // Add error data if present
+                if (log.error) {
+                    const errorData = document.createElement('div');
+                    errorData.className = 'error-data';
+                    errorData.innerHTML = `
+                        <h4>Error</h4>
+                        <pre>${log.error}</pre>
+                    `;
+                    logData.appendChild(errorData);
+                }
+                
+                logEntry.appendChild(logMeta);
+                logEntry.appendChild(logData);
                 
                 logContainer.appendChild(logEntry);
             });

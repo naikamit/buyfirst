@@ -1,5 +1,5 @@
 from fastapi import FastAPI, Request
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from datetime import datetime
@@ -8,8 +8,7 @@ import json
 import os
 from typing import List, Dict
 import logging
-from trading_logic import handle_trading_signal
-from api_logger import APILogger
+from trading_logic import handle_trading_signal, api_logger
 from health import get_health_status
 from init import init_app
 
@@ -30,7 +29,6 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")
 
 # Global variables
-api_logger = APILogger()
 last_trade_time = None
 TRADE_COOLDOWN_HOURS = 12
 
@@ -85,6 +83,13 @@ async def dashboard(request: Request):
 @app.get("/api/logs")
 async def get_logs():
     return api_logger.get_logs()
+
+@app.get("/api/tastytrade-logs")
+async def get_tastytrade_logs():
+    """Get only TastyTrade API logs."""
+    all_logs = api_logger.get_logs()
+    tastytrade_logs = [log for log in all_logs if log.get("type") == "tastytrade_api"]
+    return tastytrade_logs
 
 @app.get("/health")
 async def health_check():
