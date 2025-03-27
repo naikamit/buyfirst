@@ -6,23 +6,24 @@ Used to verify that the service is running correctly.
 import os
 from datetime import datetime
 import pytz
-from tastytrade import Tastytrade
+from tastytrade_sdk import Tastytrade
 
 async def check_tastytrade_api():
     """Check if the TastyTrade API is accessible."""
     try:
         # Initialize TastyTrade client
-        tt = Tastytrade(
-            username=os.getenv("TASTYTRADE_USERNAME"),
+        tasty = Tastytrade()
+        tasty.login(
+            login=os.getenv("TASTYTRADE_USERNAME"),
             password=os.getenv("TASTYTRADE_PASSWORD")
         )
         
         # Attempt to get accounts (this will verify authentication)
-        accounts = await tt.get_accounts()
+        accounts = tasty.api.get('/accounts')
         
         return {
             "status": "ok",
-            "message": f"Successfully connected to TastyTrade API. Found {len(accounts)} accounts."
+            "message": f"Successfully connected to TastyTrade API. Found {len(accounts.get('items', []))} accounts."
         }
     except Exception as e:
         return {

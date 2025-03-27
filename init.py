@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 def init_app():
     """Initialize the application."""
     # Create necessary directories
-    directories = ['static', 'templates']
+    directories = ['static', 'templates', 'logs']
     for directory in directories:
         if not os.path.exists(directory):
             os.makedirs(directory)
