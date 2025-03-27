@@ -12,6 +12,8 @@ from trading_logic import handle_trading_signal, api_logger
 from health import get_health_status
 from init import init_app
 
+# Last updated: March 27, 2023
+
 # Configure logging
 logging.basicConfig(
     level=logging.INFO,
