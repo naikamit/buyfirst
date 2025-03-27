@@ -91,6 +91,11 @@ async def get_tastytrade_logs():
     tastytrade_logs = [log for log in all_logs if log.get("type") == "tastytrade_api"]
     return tastytrade_logs
 
+@app.get("/api/test")
+async def test_endpoint():
+    """Simple test endpoint to verify API routing."""
+    return {"status": "ok", "message": "API is working"}
+
 @app.get("/health")
 async def health_check():
     """Health check endpoint for monitoring."""

@@ -38,6 +38,21 @@ class APILogger:
         self.logs.append(log_entry)
         self._trim_logs()
         
+    def log_tastytrade_api(self, endpoint: str, method: str, request_data: Dict = None, response_data: Dict = None, error: str = None) -> None:
+        """Log TastyTrade API call."""
+        log_entry = {
+            "timestamp": self._get_ist_time(),
+            "type": "tastytrade_api",
+            "endpoint": endpoint,
+            "method": method,
+            "request_data": request_data,
+            "response_data": response_data,
+            "error": error,
+            "status": "error" if error else "success"
+        }
+        self.logs.append(log_entry)
+        self._trim_logs()
+        
     def _trim_logs(self) -> None:
         """Keep only the most recent logs."""
         if len(self.logs) > self.max_logs:
