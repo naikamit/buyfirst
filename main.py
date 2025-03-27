@@ -36,6 +36,7 @@ TRADE_COOLDOWN_HOURS = 12
 
 @app.post("/webhook")
 async def webhook(request: Request):
+    global last_trade_time
     try:
         # Get request body
         body = await request.json()
@@ -62,7 +63,6 @@ async def webhook(request: Request):
         
         # Update last trade time if successful
         if result.get("status") == "success":
-            global last_trade_time
             last_trade_time = datetime.now(pytz.UTC)
         
         api_logger.log_response("webhook", "POST", result)
