@@ -3,7 +3,7 @@ import asyncio
 import logging
 from datetime import datetime
 from typing import Dict, Any, List, Optional, Tuple
-from tastytrade_sdk import TastytradeSession
+from tastytrade_sdk import Tastytrade
 from api_logger import APILogger
 
 # Configure logging
@@ -82,10 +82,13 @@ async def initialize_tastytrade() -> bool:
         
     try:
         # Initialize API
-        tasty = TastytradeSession(username, password, remember=True)
+        tasty = Tastytrade()
         
         # Log in
-        tasty.login()
+        tasty.login(
+            login=username,
+            password=password
+        )
         logger.info("Successfully logged into TastyTrade")
         
         # Test API with a simple call
