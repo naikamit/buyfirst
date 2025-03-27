@@ -22,6 +22,10 @@ logger = logging.getLogger(__name__)
 # Initialize the application
 init_app()
 
+# API Version
+API_VERSION = "1.1.0"
+
+# Create FastAPI app 
 app = FastAPI(title="TastyTrade Webhook Service")
 
 # Mount static files and templates
@@ -31,6 +35,11 @@ templates = Jinja2Templates(directory="templates")
 # Global variables
 last_trade_time = None
 TRADE_COOLDOWN_HOURS = 12
+
+@app.get("/version")
+async def version():
+    """Return the API version."""
+    return {"version": API_VERSION}
 
 @app.post("/webhook")
 async def webhook(request: Request):
@@ -82,6 +91,7 @@ async def dashboard(request: Request):
 
 @app.get("/api/logs")
 async def get_logs():
+    """Get all API logs."""
     return api_logger.get_logs()
 
 @app.get("/api/tastytrade-logs")
