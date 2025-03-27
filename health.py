@@ -14,8 +14,8 @@ async def check_tastytrade_api():
         # Check if credentials are set
         if not os.getenv("TASTYTRADE_USERNAME") or not os.getenv("TASTYTRADE_PASSWORD"):
             return {
-                "status": "warning",
-                "message": "TastyTrade credentials not set. Operating in demo mode."
+                "status": "error",
+                "message": "TastyTrade credentials not set."
             }
             
         # Initialize TastyTrade client
@@ -35,13 +35,13 @@ async def check_tastytrade_api():
             }
         except Exception as e:
             return {
-                "status": "warning",
-                "message": f"Error connecting to TastyTrade API: {str(e)}. Operating in demo mode."
+                "status": "error",
+                "message": f"Error connecting to TastyTrade API: {str(e)}"
             }
     except Exception as e:
         return {
-            "status": "warning",
-            "message": f"Error in TastyTrade API check: {str(e)}. Operating in demo mode."
+            "status": "error",
+            "message": f"Error in TastyTrade API check: {str(e)}"
         }
 
 async def get_health_status():
@@ -54,11 +54,8 @@ async def get_health_status():
     # Check TastyTrade API
     tastytrade_status = await check_tastytrade_api()
     
-    # Determine overall status - app can be healthy even if TastyTrade API is in warning state
-    # since we have fallback demo mode
-    overall_status = "healthy"
-    if tastytrade_status["status"] == "error":
-        overall_status = "warning"
+    # Determine overall status
+    overall_status = "healthy" if tastytrade_status["status"] == "ok" else "unhealthy"
     
     return {
         "status": overall_status,
