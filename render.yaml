@@ -1,0 +1,18 @@
+services:
+  - type: web
+    name: tt-direct
+    env: python
+    buildCommand: |
+      pip install -r requirements.txt
+      chmod +x start.sh
+    startCommand: ./start.sh
+    envVars:
+      - key: TASTYTRADE_USERNAME
+        sync: false
+      - key: TASTYTRADE_PASSWORD
+        sync: false
+      - key: TASTYTRADE_ACCOUNT_ID
+        sync: false
+      - key: PYTHON_VERSION
+        value: 3.9.0
+    healthCheckPath: /health 
